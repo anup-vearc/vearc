@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Release Readiness Checklist</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      color: #333;
+      padding: 20px;
+      max-width: 1000px;
+      margin: auto;
+    }
+    .toolbar {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .toolbar input {
+      padding: 5px;
+      width: 150px;
+    }
+    .toolbar button {
+      padding: 5px 12px;
+    }
+    h2 {
+      background-color: #007bff;
+      color: white;
+      padding: 10px;
+      border-radius: 4px;
+    }
+    .section {
+      background: white;
+      border: 1px solid #ccc;
+      padding: 15px;
+      border-radius: 6px;
+      margin-top: 20px;
+    }
+    .section h3 {
+      color: #007bff;
+    }
+    label {
+      display: block;
+      margin: 6px 0;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="toolbar">
+    <label>Version:
+      <input type="text" id="version" placeholder="e.g., 2025.07.25" />
+    </label>
+    <button id="export">📄 Export PDF</button>
+    <button id="save">💾 Save</button>
+  </div>
+
+  <h2>Release Readiness Checklist</h2>
+
+  <div id="checklist">
+    <div class="section">
+      <h3>1. Scope & Planning</h3>
+      <label><input type="checkbox"> Release scope and ticket list finalized and communicated</label>
+      <label><input type="checkbox"> Code freeze enforced, only approved hotfixes accepted</label>
+      <label><input type="checkbox"> Release notes and summary drafted and reviewed - TBD</label>
+    </div>
+    <div class="section">
+      <h3>2. Build & Testing</h3>
+      <label><input type="checkbox"> Latest code successfully deployed to UAT.</label>
+      <label><input type="checkbox"> All unit, integration, Smoke and regression tests passed.</label>
+      <label><input type="checkbox"> UAT completed, all critical defects resolved or deferred if any.</label>
+      <label><input type="checkbox"> Smoke tests prepared for Production.</label>
+    </div>
+    <div class="section">
+      <h3>3. Documentation</h3>
+      <label><input type="checkbox"> Release notes reviewed and ready to be distributed after the release.</label>
+    </div>
+    <div class="section">
+      <h3>4. Release Approvals</h3>
+      <label><input type="checkbox"> Product Owner sign-off obtained.</label>
+      <label><input type="checkbox"> QA/Testing lead approval received.</label>
+      <label><input type="checkbox"> UAT approval received.</label>
+    </div>
+    <div class="section">
+      <h3>5. Change Management</h3>
+      <label><input type="checkbox"> Stakeholders notified of scheduled release and impact</label>
+    </div>
+    <div class="section">
+      <h3>6. Deployment Preparation</h3>
+      <label><input type="checkbox"> Release owners identified and necessary access provided.</label>
+      <label><input type="checkbox"> Meeting Invite Sent for the release.</label>
+      <label><input type="checkbox"> Deployment and rollback plans reviewed and accessible.</label>
+      <label><input type="checkbox"> Responsible engineers and release managers assigned</label>
+      <label><input type="checkbox"> Downtime notifications and banners drafted if required</label>
+    </div>
+    <div class="section">
+      <h3>7. Environment & Data</h3>
+      <label><input type="checkbox"> Release checklist updated and ready without any ambiguity.</label>
+      <label><input type="checkbox"> Migrations scripts/ updates rehearsed.</label>
+    </div>
+    <div class="section">
+      <h3>8. Pre-Release Checks</h3>
+      <label><input type="checkbox"> Dependencies and third-party integrations vetted</label>
+      <label><input type="checkbox"> Feature toggles/configurations set appropriately</label>
+    </div>
+    <div class="section">
+      <h3>9. Post-Release</h3>
+      <label><input type="checkbox"> Smoke testing and business verification done</label>
+      <label><input type="checkbox"> Logs, application health, key metrics monitored</label>
+      <label><input type="checkbox"> Completion communicated to stakeholders</label>
+      <label><input type="checkbox"> Rollback plan ready in case of emergency. (TBD)</label>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script>
+    const { jsPDF } = window.jspdf;
+
+    document.getElementById("export").addEventListener("click", () => {
+      const doc = new jsPDF();
+      const checklist = document.getElementById("checklist");
+      const version = document.getElementById("version").value || "untagged";
+      let y = 20;
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(16);
+      doc.text("Release Readiness Checklist", 15, y);
+      y += 10;
+
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "normal");
+      doc.text("Version: " + version, 15, y);
+      y += 10;
+
+      checklist.querySelectorAll(".section").forEach(section => {
+        const title = section.querySelector("h3").innerText;
+
+        if (y > 270) {
+          doc.addPage();
+          y = 20;
+        }
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(13);
+        doc.setTextColor(0, 102, 204);
+        doc.text(title, 15, y);
+        y += 8;
+
+        section.querySelectorAll("label").forEach(label => {
+          const checked = label.querySelector("input").checked;
+          const text = label.innerText.trim();
+          const status = checked ? "[x] " : "[ ] ";
+          const line = status + text;
+
+          if (checked) {
+            doc.setTextColor(0, 150, 0); // green
+            doc.setFont("helvetica", "bold");
+          } else {
+            doc.setTextColor(100);
+            doc.setFont("helvetica", "normal");
+          }
+
+          const lines = doc.splitTextToSize(line, 180);
+          lines.forEach(l => {
+            if (y > 280) {
+              doc.addPage();
+              y = 20;
+            }
+            doc.text(l, 18, y);
+            y += 7;
+          });
+        });
+
+        y += 4;
+      });
+
+      doc.save("Release_Checklist_v" + version + ".pdf");
+    });
+
+    document.getElementById("save").addEventListener("click", () => {
+      const version = document.getElementById("version").value;
+      const checkboxes = Array.from(document.querySelectorAll("input[type='checkbox']")).map(cb => cb.checked);
+      localStorage.setItem("releaseChecklist", JSON.stringify({ version, checkboxes }));
+      alert("Saved to localStorage.");
+    });
+
+    // Load state
+    window.onload = () => {
+      const saved = JSON.parse(localStorage.getItem("releaseChecklist") || "{}");
+      if (saved.version) document.getElementById("version").value = saved.version;
+      if (saved.checkboxes) {
+        document.querySelectorAll("input[type='checkbox']").forEach((cb, i) => {
+          cb.checked = saved.checkboxes[i];
+        });
+      }
+    };
+  </script>
+
+</body>
+</html>
